@@ -1,107 +1,77 @@
 ﻿using EngineQuest.Logic;
-using System.IO;
-using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media.Imaging;
 
 namespace EngineQuest
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Класс MainWindow представляет собой основное окно приложения.
+    /// Здесь реализована логика взаимодействия с пользователем и обновления интерфейса.
     /// </summary>
     public partial class MainWindow : Window
     {
-        private GameEngine engine;
+        private NovelScript _script;
+        private int _currentSceneIndex;
 
         public MainWindow()
         {
             InitializeComponent();
-
-            engine = new GameEngine();
-
-            var parser = new ScriptParser();
-            var scriptContent = File.ReadAllText("scenarios.txt");
-            var scenes = parser.ParseScript(scriptContent);
-
-            engine.LoadScenes(scenes);
-            engine.StartGame("start");
-            UpdateUI();
+            _script = new NovelScript();
+            _currentSceneIndex = 0;
         }
 
-        private void UpdateUI()
+        // Загрузка сценария
+        private void OnLoadScript(object sender, RoutedEventArgs e)
         {
-            var scene = engine.CurrentScene;
-
-            // Обновляем фон
-            if (!string.IsNullOrEmpty(scene.Background))
+            var fileDialog = new Microsoft.Win32.OpenFileDialog
             {
-                string programDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                string fullPath = Path.Combine(programDirectory, scene.Background);
-                BackgroundImage.Source = new BitmapImage(new Uri(fullPath, UriKind.RelativeOrAbsolute));
-            }
+                Filter = "Text Files|*.txt"
+            };
 
-            // Обновляем музыку
+            if (fileDialog.ShowDialog() == true)
+            {
+                _script.LoadScript(fileDialog.FileName);
+                DisplayScene(_script.GetScene(_currentSceneIndex));
+            }
+        }
+
+        // Отображение сцены
+        private void DisplayScene(NovelScene scene)
+        {
+            DialogueText.Text = scene.Dialogue;
+            ChoiceButton1.Content = scene.Choice1Text;
+            ChoiceButton2.Content = scene.Choice2Text;
+
             if (!string.IsNullOrEmpty(scene.Music))
             {
-                BackgroundMusic.Source = new Uri(scene.Music, UriKind.RelativeOrAbsolute);
-                BackgroundMusic.Play();
+                PlayMusic(scene.Music);
             }
 
-            // Обновляем текст и имя персонажа
-            SpeakerLabel.Content = scene.Speaker;
-            DialogueTextBlock.Text = scene.Text;
-
-            // Очищаем панель кнопок выбора
-            ChoicesPanel.Children.Clear();
-
-            // Генерация кнопок выбора
-            if (scene.Choices != null && scene.Choices.Count > 0)
-            {
-                for (int i = 0; i < scene.Choices.Count; i++)
-                {
-                    var choice = scene.Choices[i];
-                    var button = new Button
-                    {
-                        Content = choice.Text,
-                        Tag = i,
-                        Margin = new Thickness(5),
-                        Padding = new Thickness(10)
-                    };
-
-                    button.Click += ChoiceButton_Click;
-                    ChoicesPanel.Children.Add(button);
-                }
-            }
-            else
-            {
-                // Если выборов нет, добавить кнопку "Продолжить"
-                var continueButton = new Button
-                {
-                    Content = "Продолжить",
-                    Margin = new Thickness(5),
-                    Padding = new Thickness(10)
-                };
-
-                continueButton.Click += ContinueButton_Click;
-                ChoicesPanel.Children.Add(continueButton);
-            }
+            ChoiceButton1.Visibility = string.IsNullOrEmpty(scene.Choice1Text) ? Visibility.Collapsed : Visibility.Visible;
+            ChoiceButton2.Visibility = string.IsNullOrEmpty(scene.Choice2Text) ? Visibility.Collapsed : Visibility.Visible;
         }
 
-        private void ChoiceButton_Click(object sender, RoutedEventArgs e)
+        // Проигрывание музыки
+        private void PlayMusic(string musicFile)
         {
-            var button = sender as Button;
-            int choiceIndex = (int)button.Tag;
-
-            engine.MakeChoice(choiceIndex);
-            UpdateUI();
+            // Используем MediaPlayer для проигрывания музыки
+            var mediaPlayer = new System.Windows.Media.MediaPlayer();
+            mediaPlayer.Open(new Uri(musicFile, UriKind.RelativeOrAbsolute));
+            mediaPlayer.Play();
         }
 
-
-        private void ContinueButton_Click(object sender, RoutedEventArgs e)
+        // Обработка выбора
+        private void OnChoiceClick(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Нет доступных выборов, и игра завершена!");
-        }
+            Button clickedButton = sender as Button;
+            string choice = clickedButton?.Content.ToString();
 
+            var nextSceneIndex = _script.GetNextSceneIndex(choice);
+            if (nextSceneIndex != -1)
+            {
+                _currentSceneIndex = nextSceneIndex;
+                DisplayScene(_script.GetScene(_currentSceneIndex));
+            }
+        }
     }
 }

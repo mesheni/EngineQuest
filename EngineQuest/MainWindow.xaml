@@ -5,20 +5,22 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:EngineQuest"
         mc:Ignorable="d"
+        Style="{StaticResource MaterialDesignWindow}"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-        <MediaElement Name="BackgroundMusic" LoadedBehavior="Manual" UnloadedBehavior="Stop" />
+        <Menu VerticalAlignment="Top" Background="#333333">
+            <MenuItem Header="Файл">
+                <MenuItem Header="Загрузить сценарий"/>
+            </MenuItem>
+        </Menu>
 
-        <!-- Фон -->
-        <Image Name="BackgroundImage" Stretch="Fill" />
+        <TextBlock x:Name="DialogueText" VerticalAlignment="Center" HorizontalAlignment="Center" 
+                   Foreground="White" FontSize="20" Padding="20" TextWrapping="Wrap" 
+                   TextAlignment="Center"/>
 
-        <!-- Основной интерфейс -->
-        <StackPanel VerticalAlignment="Bottom" Background="#AA000000" Width="auto" Height="auto">
-            <Label Name="SpeakerLabel" Foreground="White" FontWeight="Bold" FontSize="16" />
-            <TextBlock Name="DialogueTextBlock" Foreground="White" TextWrapping="Wrap" Margin="0,5" />
-
-            <!-- Панель кнопок выбора -->
-            <StackPanel Name="ChoicesPanel" Orientation="Vertical" Margin="0,10" />
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,20">
+            <Button x:Name="ChoiceButton1" Content="Выбор 1" Width="200" Height="40" FontSize="16" Margin="5" />
+            <Button x:Name="ChoiceButton2" Content="Выбор 2" Width="200" Height="40" FontSize="16" Margin="5" />
         </StackPanel>
     </Grid>
 </Window>
